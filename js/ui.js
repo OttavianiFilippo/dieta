@@ -32,6 +32,8 @@ const ICONS = {
   search: '<circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4"/>',
   undo: '<path d="M9 7 4.5 11.5 9 16M5 11.5h9.5a5 5 0 0 1 0 10H12"/>',
   off: '<circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/>',
+  pause: '<path d="M9 6v12M15 6v12"/>',
+  play: '<path d="M8 5.5v13l10-6.5z"/>',
   trash: '<path d="M4.5 7h15M10 11v6M14 11v6M6.5 7l1 12.5a1.5 1.5 0 0 0 1.5 1.5h6a1.5 1.5 0 0 0 1.5-1.5l1-12.5M9.5 7V4.5h5V7"/>',
 };
 

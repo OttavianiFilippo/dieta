@@ -5,6 +5,7 @@ import { shoppingList, upcomingFresh, draftFor, updateDraft, confirmShopping, al
 import { relativeLabel, toKey, fmtShort, diffDays } from '../engine/dates.js';
 import { shopStep, shopUnitLabel, fmtShop } from '../engine/units.js';
 import { getFood } from '../data/foods.js';
+import { isPaused } from '../engine/pantry.js';
 import { esc, icon, stepper } from '../ui.js';
 
 function reasons(item, todayKey) {
@@ -94,6 +95,7 @@ export function renderShop(ctx) {
       <h2>Lista della spesa</h2>
       <p class="muted">${list.length ? `${list.length} ${list.length === 1 ? 'articolo' : 'articoli'} per i prossimi giorni. Spunta quello che compri e conferma alla fine.` : 'Niente da comprare per ora.'}</p>
     </div>
+    ${isPaused(state) ? `<p class="pause-note">${icon('pause', 'icon-sm')}Dieta in pausa: la lista mostra cosa servirebbe per i prossimi giorni.</p>` : ''}
     ${empty}
     ${sections}
     ${freshHtml}

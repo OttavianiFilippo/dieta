@@ -16,6 +16,7 @@ const MON = '2026-10-12'; // lunedì
 
 function freshState() {
   const s = defaultState();
+  s.pauses = []; // dieta attiva
   globalThis.localStorage = undefined;
   return s;
 }
@@ -228,4 +229,35 @@ test('rimetti alimenti del piano: aggiunge a zero solo i mancanti', async () => 
   assert.ok(!s.pantry.pizza && !s.pantry.cola && !s.pantry.acqua);
   assert.deepEqual(missingPlanFoods(s), []);
   console.log('alimenti del piano:', Object.keys(s.pantry).length);
+});
+
+test('pausa: l’app parte in pausa e non scala nulla finché non si avvia', async () => {
+  const { resumeDiet, pauseDiet, isPaused, neverStarted } = await import('../js/engine/pantry.js');
+  const s = defaultState(); // come al primo avvio: in pausa
+  s.pauses[0].from = new Date(2026, 9, 1).toISOString();
+  assert.ok(isPaused(s) && neverStarted(s));
+  addStock(s, 'yogurt0', 5);
+  processConsumption(s, new Date(2026, 9, 12, 7, 0));
+  processConsumption(s, new Date(2026, 9, 12, 23, 0));
+  assert.equal(stockOf(s, 'yogurt0'), 5, 'in pausa non scala');
+  resumeDiet(s, new Date(2026, 9, 13, 7, 0));
+  processConsumption(s, new Date(2026, 9, 13, 9, 0));
+  assert.equal(stockOf(s, 'yogurt0'), 4, 'dopo l’avvio scala la colazione');
+  // Vacanza: pausa da martedì sera a giovedì mattina
+  pauseDiet(s, new Date(2026, 9, 13, 10, 0));
+  processConsumption(s, new Date(2026, 9, 15, 7, 0));
+  assert.equal(stockOf(s, 'yogurt0'), 4, 'in vacanza non scala');
+  resumeDiet(s, new Date(2026, 9, 15, 7, 0));
+  processConsumption(s, new Date(2026, 9, 15, 9, 0));
+  assert.equal(stockOf(s, 'yogurt0'), 3);
+  // Segnare fuori piano un giorno in pausa non restituisce nulla
+  setMealOff(s, '2026-10-14', 'colazione', true);
+  assert.equal(stockOf(s, 'yogurt0'), 3);
+});
+
+test('dati vecchi senza pausa: diventano "non ancora avviata"', async () => {
+  const { parseBackup } = await import('../js/store.js');
+  const { neverStarted } = await import('../js/engine/pantry.js');
+  const old = JSON.stringify({ app: 'dieta', state: { pantry: {}, assignments: {} } });
+  assert.ok(neverStarted(parseBackup(old)));
 });

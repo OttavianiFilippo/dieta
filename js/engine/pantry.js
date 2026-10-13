@@ -5,6 +5,35 @@ import { effectiveDay, mealTime, mealIngredients, planFoodIds } from './plan.js'
 
 const EPS = 1e-6;
 
+// ---------- Pausa ----------
+export function isPausedAt(state, t) {
+  return (state.pauses || []).some((p) => t >= new Date(p.from) && (p.to == null || t < new Date(p.to)));
+}
+
+export function currentPause(state) {
+  const p = (state.pauses || [])[state.pauses.length - 1];
+  return p && p.to == null ? p : null;
+}
+
+export function isPaused(state) {
+  return !!currentPause(state);
+}
+
+export function neverStarted(state) {
+  const p = currentPause(state);
+  return !!(p && p.initial && state.pauses.length === 1);
+}
+
+export function pauseDiet(state, now) {
+  if (isPaused(state)) return;
+  state.pauses.push({ from: now.toISOString(), to: null });
+}
+
+export function resumeDiet(state, now) {
+  const p = currentPause(state);
+  if (p) p.to = now.toISOString();
+}
+
 export function stockOf(state, id) {
   const p = state.pantry[id];
   return p ? p.qty + p.frozen : 0;
@@ -84,7 +113,7 @@ export function processConsumption(state, now) {
     const day = effectiveDay(state, key);
     for (const meal of day.meals) {
       const t = mealTime(key, meal);
-      if (t > last && t <= now && !meal.off) {
+      if (t > last && t <= now && !meal.off && !isPausedAt(state, t)) {
         for (const ing of mealIngredients(meal)) deductStock(state, ing.food, ing.qty);
         count++;
       }
@@ -102,7 +131,8 @@ function consumedMap(state, dateKeys) {
   for (const key of dateKeys) {
     const day = effectiveDay(state, key);
     for (const meal of day.meals) {
-      if (mealTime(key, meal) > last) continue;
+      const t = mealTime(key, meal);
+      if (t > last || isPausedAt(state, t)) continue;
       for (const ing of mealIngredients(meal)) map[ing.food] = (map[ing.food] || 0) + ing.qty;
     }
   }

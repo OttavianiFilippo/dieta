@@ -1,7 +1,7 @@
 // Schermata "Dispensa": cosa hai in casa, modificabile a mano.
 
 import { REPARTI, getFood } from '../data/foods.js';
-import { stockOf, frozenOf, setStock, missingPlanFoods, restorePlanFoods } from '../engine/pantry.js';
+import { stockOf, frozenOf, setStock, missingPlanFoods, restorePlanFoods, isPaused } from '../engine/pantry.js';
 import { upcomingNeeds } from '../engine/shopping.js';
 import { fmtBase, pantryStep } from '../engine/units.js';
 import { relativeLabel } from '../engine/dates.js';
@@ -58,6 +58,7 @@ export function renderPantry(ctx) {
       <h2>Dispensa</h2>
       <p class="muted">Quello che hai in casa secondo l'app. Dopo l'orario di ogni pasto, quello che c'era nel piano viene scalato da solo. Se qualcosa non torna, correggi qui.</p>
     </div>
+    ${isPaused(state) ? `<p class="pause-note">${icon('pause', 'icon-sm')}Dieta in pausa: i pasti non vengono scalati.</p>` : ''}
     <button type="button" class="btn btn-outline btn-block" data-action="open-add">${icon('plus', 'icon-sm')}Aggiungi alimento</button>
     ${missing ? `<button type="button" class="btn btn-outline btn-block" data-action="pantry-restore">${icon('undo', 'icon-sm')}Rimetti gli alimenti del piano (${missing} ${missing === 1 ? 'mancante' : 'mancanti'})</button>` : ''}
     ${ids.length ? sections : `<section class="card empty">${icon('pantry', 'icon-lg')}<h3>La dispensa è vuota</h3><p class="muted">Si riempie quando confermi la spesa. Se hai già qualcosa in casa, aggiungilo con il pulsante qui sopra.</p></section>`}

@@ -5,7 +5,7 @@ import { effectiveDay, mealTime, activePlan } from '../engine/plan.js';
 import { addDays, fmtLong, diffDays, relativeLabel } from '../engine/dates.js';
 import { fmtPlanAmount } from '../engine/units.js';
 import { hasSubstitutions } from '../engine/subs.js';
-import { setMealOff, setDayOff } from '../engine/pantry.js';
+import { setMealOff, setDayOff, isPausedAt, isPaused, neverStarted } from '../engine/pantry.js';
 import { esc, icon, fmtTime } from '../ui.js';
 
 function itemName(item) {
@@ -59,7 +59,9 @@ function renderMeal(meal, day, ctx, flags) {
     : meal.id === nextId
       ? `<span class="badge badge-next">Prossimo</span>`
       : passed
-        ? `<span class="badge badge-done">${icon('check', 'icon-sm')}Fatto</span>`
+        ? isPausedAt(ctx.state, mealTime(day.dateKey, meal))
+          ? `<span class="badge">In pausa</span>`
+          : `<span class="badge badge-done">${icon('check', 'icon-sm')}Fatto</span>`
         : '';
   const time = meal.time ? fmtTime(meal.time) : meal.label;
   const expanded = ctx.ui.expanded[`${day.dateKey}|${meal.id}`];
@@ -132,6 +134,12 @@ export function renderToday(ctx) {
         ${isPast ? '' : `<button type="button" class="btn btn-small" data-action="toggle-day-off">Rimetti nel piano</button>`}</div>`
     : '';
 
+  const pauseBanner = isPaused(state) && !isPast
+    ? `<div class="banner banner-pause">${icon('pause')}<div><strong>${neverStarted(state) ? 'Dieta non ancora avviata' : 'Dieta in pausa'}</strong>
+        <p>Vedi il piano normalmente, ma i pasti non vengono scalati dalla dispensa. ${neverStarted(state) ? 'La avvii tu' : 'La riprendi tu'} dalle Impostazioni.</p></div>
+        <button type="button" class="btn btn-small btn-outline" data-action="open-settings">Impostazioni</button></div>`
+    : '';
+
   return `
     <div class="day-nav">
       <button type="button" class="icon-btn" data-action="day-prev" aria-label="Giorno precedente">${icon('left')}</button>
@@ -159,6 +167,7 @@ export function renderToday(ctx) {
       </div>
       ${!day.off && !isPast ? `<button type="button" class="link-btn muted" data-action="toggle-day-off">${icon('off', 'icon-sm')}Segna tutto il giorno fuori piano</button>` : ''}
     </section>
+    ${pauseBanner}
     ${dayOffBanner}
     ${day.meals.map((m) => renderMeal(m, day, ctx, { isToday, isPast, nextId })).join('')}
     <p class="footnote">Tocca un alimento per sostituirlo con le tabelle del nutrizionista.</p>

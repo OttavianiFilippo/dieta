@@ -18,6 +18,8 @@ export function defaultState() {
     offPlan: { days: {}, meals: {} },
     shopDraft: {}, // foodId → { checked, qty, frozen, frozenG }
     purchases: [], // [{ at, items: [{ food, label }] }]
+    // Periodi di pausa: i pasti in questi periodi non vengono scalati. Si parte in pausa.
+    pauses: [{ from: '2000-01-01T00:00:00.000Z', to: null, initial: true }],
   };
 }
 
@@ -26,6 +28,7 @@ function normalize(s) {
   const out = { ...d, ...s };
   out.subs = { ...d.subs, ...(s.subs || {}) };
   out.offPlan = { ...d.offPlan, ...(s.offPlan || {}) };
+  if (!Array.isArray(s.pauses)) out.pauses = [{ from: '2000-01-01T00:00:00.000Z', to: null, initial: true }];
   if (!PLANS[out.planId]) out.planId = DEFAULT_PLAN_ID;
   // Rimuove alimenti non più presenti nel catalogo
   for (const id of Object.keys(out.pantry)) if (!FOODS[id]) delete out.pantry[id];

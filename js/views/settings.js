@@ -3,10 +3,11 @@
 import { PLANS } from '../data/plans/index.js';
 import { activePlan } from '../engine/plan.js';
 import { exportBackup, parseBackup, defaultState } from '../store.js';
-import { toKey, fmtShort } from '../engine/dates.js';
+import { toKey, fmtShort, fmtDayMonth } from '../engine/dates.js';
+import { isPaused, neverStarted, currentPause, pauseDiet, resumeDiet } from '../engine/pantry.js';
 import { esc, icon } from '../ui.js';
 
-export const APP_VERSION = '1.0.2';
+export const APP_VERSION = '1.1.0';
 
 export function renderSettings(ctx) {
   const { state } = ctx;
@@ -17,6 +18,8 @@ export function renderSettings(ctx) {
     <div class="page-intro">
       <h2>Impostazioni</h2>
     </div>
+
+    ${renderDietState(state)}
 
     <section class="card">
       <h3 class="card-title">Piano alimentare</h3>
@@ -45,6 +48,33 @@ export function renderSettings(ctx) {
   `;
 }
 
+function renderDietState(state) {
+  const paused = isPaused(state);
+  const never = neverStarted(state);
+  const since = (iso) => fmtDayMonth(toKey(new Date(iso)));
+  const last = state.pauses[state.pauses.length - 1];
+  let title, text, btn;
+  if (never) {
+    title = 'Dieta non ancora avviata';
+    text = 'Vedi il piano e puoi preparare la spesa, ma i pasti non vengono scalati dalla dispensa. Avviala quando vuoi iniziare davvero.';
+    btn = `<button type="button" class="btn btn-primary btn-block" data-action="diet-resume">${icon('play', 'icon-sm')}Avvia la dieta</button>`;
+  } else if (paused) {
+    title = `In pausa dal ${since(currentPause(state).from)}`;
+    text = 'I giorni passano ma la dispensa non viene scalata. Quando ricominci, premi Riprendi.';
+    btn = `<button type="button" class="btn btn-primary btn-block" data-action="diet-resume">${icon('play', 'icon-sm')}Riprendi la dieta</button>`;
+  } else {
+    title = `Attiva dal ${since(last && last.to ? last.to : state.createdAt)}`;
+    text = 'Dopo l\u2019orario di ogni pasto, quello che c\u2019era nel piano viene scalato dalla dispensa. Se vai in vacanza o non puoi seguire la dieta, metti in pausa.';
+    btn = `<button type="button" class="btn btn-outline btn-block" data-action="diet-pause">${icon('pause', 'icon-sm')}Metti in pausa</button>`;
+  }
+  return `<section class="card diet-state ${paused ? 'is-paused' : 'is-active'}">
+    <h3 class="card-title">Stato della dieta</h3>
+    <p><strong>${esc(title)}</strong></p>
+    <p class="muted small">${text}</p>
+    ${btn}
+  </section>`;
+}
+
 async function shareOrDownload(text, filename) {
   const blob = new Blob([text], { type: 'application/json' });
   const file = new File([blob], filename, { type: 'application/json' });
@@ -68,6 +98,15 @@ async function shareOrDownload(text, filename) {
 }
 
 export const settingsActions = {
+  'diet-resume': (el, ctx) => {
+    const first = neverStarted(ctx.state);
+    ctx.commit((s) => resumeDiet(s, ctx.now));
+    ctx.toast(first ? 'Dieta avviata: da ora i pasti vengono scalati' : 'Dieta ripresa');
+  },
+  'diet-pause': (el, ctx) => {
+    ctx.commit((s) => pauseDiet(s, ctx.now));
+    ctx.toast('Dieta in pausa: la dispensa non viene scalata');
+  },
   'set-plan': (el, ctx) => {
     ctx.commit((s) => { s.planId = el.dataset.plan; });
     ctx.toast('Piano cambiato');
