@@ -197,3 +197,21 @@ test('giorno fuori piano: niente spesa per quel giorno', async () => {
   const list = shoppingList(s, now);
   assert.ok(!list.find((i) => i.food.id === 'branzino'), 'il branzino di lunedì non serve più');
 });
+
+test('dispensa: a zero l’alimento resta, lo elimina solo l’utente', async () => {
+  const { setStock, removeFood } = await import('../js/engine/pantry.js');
+  const s = freshState();
+  addStock(s, 'mela', 1);
+  setStock(s, 'mela', 0);
+  assert.ok(s.pantry.mela, 'resta in dispensa a zero');
+  assert.equal(stockOf(s, 'mela'), 0);
+  setStock(s, 'mela', -3);
+  assert.equal(stockOf(s, 'mela'), 0, 'non va sotto zero');
+  // Anche il consumo automatico non lo fa sparire
+  addStock(s, 'banana', 1);
+  processConsumption(s, new Date(2026, 9, 12, 7, 0));
+  processConsumption(s, new Date(2026, 9, 12, 18, 0));
+  assert.ok(s.pantry.banana);
+  removeFood(s, 'mela');
+  assert.equal(s.pantry.mela, undefined);
+});

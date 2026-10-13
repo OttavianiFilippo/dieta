@@ -21,7 +21,7 @@ function coverage(entries, stock, todayKey) {
 
 export function renderPantry(ctx) {
   const { state, now, todayKey } = ctx;
-  const ids = Object.keys(state.pantry).filter((id) => stockOf(state, id) > EPS);
+  const ids = Object.keys(state.pantry);
   const needs = upcomingNeeds(state, now, 7);
 
   const sections = REPARTI.map((r) => {
@@ -33,7 +33,7 @@ export function renderPantry(ctx) {
         const qty = stockOf(state, f.id);
         const frozen = frozenOf(state, f.id);
         const cov = coverage(needs[f.id], qty, todayKey);
-        return `<div class="pantry-row">
+        return `<div class="pantry-row ${qty <= EPS ? 'is-empty' : ''}">
           <div class="pantry-info">
             <span class="shop-name">${esc(f.name)}</span>
             <span class="pantry-qty">${frozen > EPS
@@ -43,7 +43,10 @@ export function renderPantry(ctx) {
               : esc(fmtBase(f, qty))}</span>
             <span class="pantry-cov ${cov.cls}">${esc(cov.text)}</span>
           </div>
-          ${stepper({ action: 'pantry-step', id: f.id, value: '', min: -1 })}
+          <div class="pantry-ctrl">
+            ${stepper({ action: 'pantry-step', id: f.id, value: '', minusDisabled: qty <= EPS })}
+            <button type="button" class="icon-btn trash-btn" data-action="pantry-remove" data-id="${f.id}" aria-label="Elimina ${esc(f.name)}">${icon('trash')}</button>
+          </div>
         </div>`;
       }).join('')}
     </section>`;
@@ -67,4 +70,5 @@ export const pantryActions = {
     ctx.commit((s) => setStock(s, f.id, Math.max(0, cur + step)));
   },
   'open-add': (el, ctx) => ctx.openSheet({ type: 'add' }),
+  'pantry-remove': (el, ctx) => ctx.openSheet({ type: 'confirm-remove', id: el.dataset.id }),
 };

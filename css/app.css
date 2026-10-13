@@ -326,6 +326,11 @@ small { font-size: 0.8em; }
 .pantry-qty { font-size: 14px; display: inline-flex; align-items: center; gap: 3px; flex-wrap: wrap; font-variant-numeric: tabular-nums; }
 .pantry-cov { font-size: 12px; }
 .pantry-cov.muted { color: var(--muted); }
+.pantry-ctrl { display: flex; align-items: center; gap: 2px; flex: none; }
+.trash-btn { color: var(--muted); }
+.trash-btn:active { color: var(--danger); background: var(--danger-soft); }
+.pantry-row.is-empty .pantry-qty { color: var(--muted); }
+.confirm-row { margin-top: 4px; }
 
 /* ---------- Pannello dal basso ---------- */
 .sheet-backdrop { position: fixed; inset: 0; background: rgba(10, 20, 10, 0.4); z-index: 40; animation: fade 0.18s ease-out; }
@@ -414,5 +419,5 @@ small { font-size: 0.8em; }
   .checks strong { font-size: 19px; }
 }
 
-.btn-danger { margin-top: 10px; }
+.card > .btn-danger { margin-top: 10px; }
 .add-list { min-height: 50vh; align-content: flex-start; }

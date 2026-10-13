@@ -20,9 +20,16 @@ function entry(state, id) {
   return state.pantry[id];
 }
 
-function cleanup(state, id) {
+// Gli alimenti restano in dispensa anche a zero: li elimina solo l'utente.
+function clamp(state, id) {
   const p = state.pantry[id];
-  if (p && p.qty + p.frozen <= EPS) delete state.pantry[id];
+  if (!p) return;
+  if (p.qty < EPS) p.qty = 0;
+  if (p.frozen < EPS) p.frozen = 0;
+}
+
+export function removeFood(state, id) {
+  delete state.pantry[id];
 }
 
 export function addStock(state, id, qty, frozen = false) {
@@ -39,11 +46,12 @@ export function deductStock(state, id, qty) {
   const fromFresh = Math.min(p.qty, qty);
   p.qty -= fromFresh;
   p.frozen = Math.max(0, p.frozen - (qty - fromFresh));
-  cleanup(state, id);
+  clamp(state, id);
 }
 
 // Modifica manuale del totale
 export function setStock(state, id, total) {
+  entry(state, id);
   const cur = stockOf(state, id);
   if (total > cur) addStock(state, id, total - cur);
   else deductStock(state, id, cur - total);

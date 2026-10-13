@@ -4,7 +4,7 @@ import { getFood, REPARTI } from '../data/foods.js';
 import { effectiveDay, activePlan, weekAssignment, swapDay } from '../engine/plan.js';
 import { weekKey, weekDates, weekdayIdx, fmtShort, diffDays } from '../engine/dates.js';
 import { substitutionOptions, makeSub } from '../engine/subs.js';
-import { withConsumptionDelta, addStock } from '../engine/pantry.js';
+import { withConsumptionDelta, addStock, removeFood } from '../engine/pantry.js';
 import { fmtPlanAmount, pantryStep } from '../engine/units.js';
 import { allFoods } from '../engine/shopping.js';
 import { esc, icon } from '../ui.js';
@@ -215,13 +215,39 @@ const addActions = {
   },
 };
 
+// ---------- Conferma eliminazione dalla dispensa ----------
+function renderConfirmRemove(ctx, sheet) {
+  const f = getFood(sheet.id);
+  return `
+    <div class="sheet-head">
+      <div>
+        <h2>Eliminare ${esc(f.name.toLowerCase())}?</h2>
+        <p class="muted">Sparisce dalla dispensa. Se servirà nel piano, ricomparirà nella lista della spesa.</p>
+      </div>
+    </div>
+    <div class="btn-row confirm-row">
+      <button type="button" class="btn btn-outline" data-action="close-sheet">No</button>
+      <button type="button" class="btn btn-danger" data-action="pantry-remove-yes">Sì, elimina</button>
+    </div>`;
+}
+
+const confirmActions = {
+  'pantry-remove-yes': (el, ctx) => {
+    const f = getFood(ctx.ui.sheet.id);
+    ctx.commit((s) => removeFood(s, f.id));
+    ctx.closeSheet();
+    ctx.toast(`${f.name}: eliminato dalla dispensa`);
+  },
+};
+
 export function renderSheet(ctx) {
   const sheet = ctx.ui.sheet;
   if (!sheet) return '';
   if (sheet.type === 'item') return renderItemSheet(ctx, sheet);
   if (sheet.type === 'swap') return renderSwapSheet(ctx, sheet);
   if (sheet.type === 'add') return renderAddSheet(ctx, sheet);
+  if (sheet.type === 'confirm-remove') return renderConfirmRemove(ctx, sheet);
   return '';
 }
 
-export const sheetActions = { ...itemActions, ...swapActions, ...addActions };
+export const sheetActions = { ...itemActions, ...swapActions, ...addActions, ...confirmActions };
