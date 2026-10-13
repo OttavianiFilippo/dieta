@@ -1,7 +1,7 @@
 // Dispensa virtuale: acquisti in entrata, pasti consumati in uscita.
 
 import { toKey, addDays, weekDates, weekKey } from './dates.js';
-import { effectiveDay, mealTime, mealIngredients } from './plan.js';
+import { effectiveDay, mealTime, mealIngredients, planFoodIds } from './plan.js';
 
 const EPS = 1e-6;
 
@@ -26,6 +26,17 @@ function clamp(state, id) {
   if (!p) return;
   if (p.qty < EPS) p.qty = 0;
   if (p.frozen < EPS) p.frozen = 0;
+}
+
+export function missingPlanFoods(state) {
+  return planFoodIds(state).filter((id) => !state.pantry[id]);
+}
+
+// Rimette in dispensa, a zero, gli alimenti del piano che mancano.
+export function restorePlanFoods(state) {
+  const missing = missingPlanFoods(state);
+  for (const id of missing) entry(state, id);
+  return missing.length;
 }
 
 export function removeFood(state, id) {

@@ -6,7 +6,7 @@ import { exportBackup, parseBackup, defaultState } from '../store.js';
 import { toKey, fmtShort } from '../engine/dates.js';
 import { esc, icon } from '../ui.js';
 
-export const APP_VERSION = '1.0.1';
+export const APP_VERSION = '1.0.2';
 
 export function renderSettings(ctx) {
   const { state } = ctx;

@@ -1,7 +1,7 @@
 // Schermata "Dispensa": cosa hai in casa, modificabile a mano.
 
 import { REPARTI, getFood } from '../data/foods.js';
-import { stockOf, frozenOf, setStock } from '../engine/pantry.js';
+import { stockOf, frozenOf, setStock, missingPlanFoods, restorePlanFoods } from '../engine/pantry.js';
 import { upcomingNeeds } from '../engine/shopping.js';
 import { fmtBase, pantryStep } from '../engine/units.js';
 import { relativeLabel } from '../engine/dates.js';
@@ -22,6 +22,7 @@ function coverage(entries, stock, todayKey) {
 export function renderPantry(ctx) {
   const { state, now, todayKey } = ctx;
   const ids = Object.keys(state.pantry);
+  const missing = missingPlanFoods(state).length;
   const needs = upcomingNeeds(state, now, 7);
 
   const sections = REPARTI.map((r) => {
@@ -58,6 +59,7 @@ export function renderPantry(ctx) {
       <p class="muted">Quello che hai in casa secondo l'app. Dopo l'orario di ogni pasto, quello che c'era nel piano viene scalato da solo. Se qualcosa non torna, correggi qui.</p>
     </div>
     <button type="button" class="btn btn-outline btn-block" data-action="open-add">${icon('plus', 'icon-sm')}Aggiungi alimento</button>
+    ${missing ? `<button type="button" class="btn btn-outline btn-block" data-action="pantry-restore">${icon('undo', 'icon-sm')}Rimetti gli alimenti del piano (${missing} ${missing === 1 ? 'mancante' : 'mancanti'})</button>` : ''}
     ${ids.length ? sections : `<section class="card empty">${icon('pantry', 'icon-lg')}<h3>La dispensa è vuota</h3><p class="muted">Si riempie quando confermi la spesa. Se hai già qualcosa in casa, aggiungilo con il pulsante qui sopra.</p></section>`}
   `;
 }
@@ -70,5 +72,10 @@ export const pantryActions = {
     ctx.commit((s) => setStock(s, f.id, Math.max(0, cur + step)));
   },
   'open-add': (el, ctx) => ctx.openSheet({ type: 'add' }),
+  'pantry-restore': (el, ctx) => {
+    let n = 0;
+    ctx.commit((s) => { n = restorePlanFoods(s); });
+    ctx.toast(`Rimessi ${n} alimenti del piano, a zero`);
+  },
   'pantry-remove': (el, ctx) => ctx.openSheet({ type: 'confirm-remove', id: el.dataset.id }),
 };

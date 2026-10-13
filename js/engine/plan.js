@@ -102,6 +102,19 @@ export function mealIngredients(meal) {
   return meal.items.flatMap(itemIngredients);
 }
 
+// Tutti gli alimenti acquistabili del piano attivo (senza sostituzioni)
+export function planFoodIds(state) {
+  const ids = new Set();
+  for (const day of Object.values(activePlan(state).days)) {
+    for (const meal of day.meals) {
+      for (const it of meal.items) {
+        for (const ing of itemIngredients(it)) ids.add(ing.food);
+      }
+    }
+  }
+  return [...ids];
+}
+
 export function weekDays(state, wk) {
   return weekDates(wk).map((d) => effectiveDay(state, d));
 }

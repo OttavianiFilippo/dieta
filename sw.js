@@ -1,6 +1,6 @@
 // Service worker: tiene l'app in cache per usarla anche offline.
 // Ad ogni aggiornamento dell'app va cambiata VERSION.
-const VERSION = 'dieta-v1.0.1';
+const VERSION = 'dieta-v1.0.2';
 
 const FILES = [
   './',

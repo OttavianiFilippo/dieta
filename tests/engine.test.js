@@ -215,3 +215,17 @@ test('dispensa: a zero l’alimento resta, lo elimina solo l’utente', async ()
   removeFood(s, 'mela');
   assert.equal(s.pantry.mela, undefined);
 });
+
+test('rimetti alimenti del piano: aggiunge a zero solo i mancanti', async () => {
+  const { restorePlanFoods, missingPlanFoods } = await import('../js/engine/pantry.js');
+  const s = freshState();
+  addStock(s, 'pasta', 500);
+  const n = restorePlanFoods(s);
+  assert.ok(n > 30, `aggiunti ${n}`);
+  assert.equal(stockOf(s, 'pasta'), 500, 'non tocca le quantità esistenti');
+  assert.equal(stockOf(s, 'mela'), 0);
+  assert.ok(s.pantry.fagioliBarattolo && s.pantry.proteine);
+  assert.ok(!s.pantry.pizza && !s.pantry.cola && !s.pantry.acqua);
+  assert.deepEqual(missingPlanFoods(s), []);
+  console.log('alimenti del piano:', Object.keys(s.pantry).length);
+});
